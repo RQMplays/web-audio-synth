@@ -1,54 +1,80 @@
-let audioCtx = new (window.AudioContext || window.webkitAudioContext)()
-console.log('audioCtx', audioCtx)
+class Synthesizer {
+  constructor() {
+    this.update = this.update.bind(this)
+  }
 
-let oscillator = audioCtx.createOscillator()
-console.log('oscillator', oscillator)
+  init() {
+    console.log(this)
+    this.audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+    console.log('audioCtx', this.audioCtx)
 
-let biquadFilter = audioCtx.createBiquadFilter()
-console.log('biquadFilter', biquadFilter)
-
-let gain = audioCtx.createGain()
-console.log('gain', gain)
-
-oscillator.connect(biquadFilter)
-biquadFilter.connect(gain)
-
-oscillator.frequency.value = 440
-oscillator.type = 'sine'
-
-biquadFilter.type = 'lowpass'
-biquadFilter.frequency.value = 300
-biquadFilter.Q.value = 1
-
-oscillator.start()
-
-// Controls
-let btnStart = document.getElementById('start')
-btnStart.onclick = () => gain.connect(audioCtx.destination)
-
-let btnStop = document.getElementById('stop')
-btnStop.onclick = () => gain.disconnect(audioCtx.destination)
-
-let btnSweep = document.getElementById('sweep')
-btnSweep.onclick = () => {
-  freqInput.value = 20
-  const grow = () => {
-    freqInput.value = 1 + parseInt(freqInput.value)
-    if (freqInput.value === 20000) {
-      clear()
+    this.oscillator = this.audioCtx.createOscillator()
+    console.log('oscillator', this.oscillator)
+    
+    this.biquadFilter = this.audioCtx.createBiquadFilter()
+    console.log('biquadFilter', this.biquadFilter)
+    
+    this.gain = this.audioCtx.createGain()
+    console.log('gain', this.gain)
+    
+    this.oscillator.connect(this.biquadFilter)
+    this.biquadFilter.connect(this.gain)
+    
+    this.oscillator.frequency.value = 440
+    this.oscillator.type = 'sine'
+    
+    this.biquadFilter.type = 'lowpass'
+    this.biquadFilter.frequency.value = 300
+    this.biquadFilter.Q.value = 1
+    
+    this.oscillator.start()
+  }
+  
+  update() {
+    console.log('this in update', this)
+    this.oscillator.frequency.value = freqInput.value
+  }
+  
+  connect() {
+    this.gain.connect(this.audioCtx.destination)
+  }
+  
+  disconnect() {
+    this.gain.disconnect(this.audioCtx.destination)
+  }
+  
+  sweep() {
+    freqInput.value = 20
+    const grow = () => {
+      freqInput.value = 1 + parseInt(freqInput.value)
+      if (freqInput.value === 20000) {
+        clear()
+      }
+    }
+    let sweepProgress = setInterval(grow, 5)
+    const clear = () => {
+      clearInterval(sweepProgress)
+      freqInput.value = 20
     }
   }
-  let sweepProgress = setInterval(grow, 5)
-  const clear = () => {
-    clearInterval(sweepProgress)
-    freqInput.value = 20
-  }
 }
 
-freqInput = document.getElementById('OSCfrequency')
+const synthesizer = new Synthesizer()
 
-update = () => {
-  oscillator.frequency.value = freqInput.value
-}
+// Controls
+const btnInit = document.getElementById('init')
+btnInit.onclick = () => synthesizer.init()
 
-setInterval(update, 5)
+const btnStart = document.getElementById('start')
+btnStart.onclick = () => synthesizer.connect()
+
+const btnStop = document.getElementById('stop')
+btnStop.onclick = () => synthesizer.disconnect()
+
+const freqInput = document.getElementById('OSCfrequency')
+
+const btnSweep = document.getElementById('sweep')
+btnSweep.onclick = () => synthesizer.sweep()
+
+const btnUpdate = document.getElementById('update')
+btnUpdate.onclick = () => setInterval(synthesizer.update, 5)
